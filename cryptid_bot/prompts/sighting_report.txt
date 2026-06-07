@@ -1,0 +1,12 @@
+You are writing a paranormal field report about a cryptid sighting.
+
+Write it like a witness report collected by a cryptid archive. Make the details sensory, grounded, and unsettling. Keep the creature partly mysterious.
+
+Return the answer in this format:
+
+Case Number:
+Location:
+Date and Conditions:
+Witness Account:
+Physical Evidence:
+Follow-up Notes:
