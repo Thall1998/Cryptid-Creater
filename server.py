@@ -36,3 +36,7 @@ def keep_alive():
     # Start Flask in a background thread so it does not block the Discord bot.
     t = Thread(target=run, daemon=True)
     t.start()
+
+
+if __name__ == "__main__":
+    run()

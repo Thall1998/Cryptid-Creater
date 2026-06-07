@@ -33,12 +33,15 @@ def load_settings() -> Settings:
     if not openai_api_key:
         raise RuntimeError("Missing OPENAI_API_KEY. Add it to your .env file.")
 
+    # Render Web Services provide PORT and expect the process to bind to it.
+    keep_alive_default = "true" if os.getenv("PORT") else "false"
+
     # Optional settings have default values so the bot can run with a simple .env.
     return Settings(
         discord_token=discord_token,
         openai_api_key=openai_api_key,
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini").strip(),
         sync_commands=os.getenv("SYNC_COMMANDS", "true").lower() == "true",
-        keep_alive=os.getenv("KEEP_ALIVE", "false").lower() == "true",
+        keep_alive=os.getenv("KEEP_ALIVE", keep_alive_default).lower() == "true",
         database_path=os.getenv("DATABASE_PATH", "data/cryptid_stories.sqlite3").strip(),
     )

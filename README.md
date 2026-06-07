@@ -53,3 +53,22 @@ The creation commands post the generated story in the channel with an archive ID
 - `cryptid_bot/prompts/` contains editable prompt templates.
 
 Set `KEEP_ALIVE=true` in `.env` if you need the Flask health server to run alongside the Discord bot.
+
+## Render Deployment
+
+For a Render Web Service:
+
+- Build command: `pip install -r requirements.txt`
+- Start command: `python main.py`
+- Health check path: `/health`
+
+Render provides a `PORT` environment variable for Web Services. When `PORT` is present, the bot automatically starts the Flask keep-alive server so Render can detect an open port.
+
+Required environment variables:
+
+```env
+DISCORD_TOKEN=your_discord_bot_token
+OPENAI_API_KEY=your_openai_api_key
+```
+
+If you deploy as a Render Background Worker instead, no open port is required.
