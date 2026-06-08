@@ -68,7 +68,8 @@ Required environment variables:
 
 ```env
 DISCORD_TOKEN=your_discord_bot_token
-OPENAI_API_KEY=your_openai_api_key
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.0-flash
 ```
 
 If you deploy as a Render Background Worker instead, no open port is required.

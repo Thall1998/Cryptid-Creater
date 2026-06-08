@@ -1,18 +1,19 @@
-from openai import OpenAI
+from google import genai
+from google.genai import types
 
 from cryptid_bot.config import Settings
 from cryptid_bot.prompts import load_prompt
 
 
 # This class keeps all AI-related code in one place.
-# Discord commands call these methods instead of talking to OpenAI directly.
+# Discord commands call these methods instead of talking to Gemini directly.
 class CryptidStoryAI:
     def __init__(self, settings: Settings):
         # Save settings so every method can use the selected model/API key.
         self.settings = settings
 
-        # Create the OpenAI client once when the bot starts.
-        self.client = OpenAI(api_key=settings.openai_api_key)
+        # Create the Gemini client once when the bot starts.
+        self.client = genai.Client(api_key=settings.gemini_api_key)
 
     def create_cryptid(self, idea: str, tone: str | None = None) -> str:
         # Generates a full cryptid profile using the cryptid_creator prompt file.
@@ -56,12 +57,18 @@ class CryptidStoryAI:
         prompt_lines = [f"{key}: {value}" for key, value in user_input.items()]
         user_prompt = "\n".join(prompt_lines)
 
-        # Send the request to the selected AI model.
-        response = self.client.responses.create(
-            model=self.settings.openai_model,
-            instructions=system_prompt,
-            input=user_prompt,
+        # Send the request to the selected Gemini model.
+        response = self.client.models.generate_content(
+            model=self.settings.gemini_model,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.9,
+            ),
         )
 
-        # output_text is the final generated text we send back to Discord.
-        return response.output_text.strip()
+        # text is the final generated story/profile we send back to Discord.
+        text = (response.text or "").strip()
+        if not text:
+            raise RuntimeError("Gemini returned an empty response.")
+        return text
