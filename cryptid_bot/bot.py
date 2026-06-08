@@ -5,7 +5,7 @@ from collections.abc import Callable
 import discord
 from discord import app_commands
 
-from cryptid_bot.ai import CryptidStoryAI
+from cryptid_bot.ai import AIServiceError, CryptidStoryAI
 from cryptid_bot.archive import StoryArchive
 from cryptid_bot.config import load_settings
 from cryptid_bot.discord_utils import split_discord_message
@@ -71,7 +71,7 @@ def register_commands(bot: CryptidBot) -> None:
         except Exception as exc:
             # Log the full error for debugging, then show a short message in Discord.
             logging.exception("Failed to create cryptid")
-            await interaction.followup.send(f"Could not create a cryptid entry: {exc}")
+            await interaction.followup.send(format_generation_error("cryptid entry", exc), ephemeral=True)
 
     # /origin writes a legend/backstory for a cryptid the user already has.
     @bot.tree.command(name="origin", description="Write an origin story for a cryptid.")
@@ -93,7 +93,7 @@ def register_commands(bot: CryptidBot) -> None:
             )
         except Exception as exc:
             logging.exception("Failed to create origin story")
-            await interaction.followup.send(f"Could not create an origin story: {exc}")
+            await interaction.followup.send(format_generation_error("origin story", exc), ephemeral=True)
 
     # /sighting writes a witness report or archive case file.
     @bot.tree.command(name="sighting", description="Write a witness sighting report.")
@@ -119,7 +119,7 @@ def register_commands(bot: CryptidBot) -> None:
             )
         except Exception as exc:
             logging.exception("Failed to create sighting report")
-            await interaction.followup.send(f"Could not create a sighting report: {exc}")
+            await interaction.followup.send(format_generation_error("sighting report", exc), ephemeral=True)
 
     @bot.tree.command(name="mycryptids", description="Show your recently archived cryptid stories.")
     async def mycryptids(interaction: discord.Interaction):
@@ -199,6 +199,14 @@ def extract_title(text: str, fallback: str) -> str:
                 return title[:120]
 
     return fallback.strip()[:120] or "Untitled story"
+
+
+def format_generation_error(label: str, exc: Exception) -> str:
+    if isinstance(exc, AIServiceError):
+        detail = str(exc)
+    else:
+        detail = "An unexpected error happened. The full details were written to the bot logs."
+    return f"Could not create a {label}: {detail}"
 
 
 def build_help_text() -> str:

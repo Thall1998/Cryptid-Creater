@@ -1,6 +1,7 @@
 import unittest
 
-from cryptid_bot.bot import build_help_text, extract_title
+from cryptid_bot.ai import AIQuotaError
+from cryptid_bot.bot import build_help_text, extract_title, format_generation_error
 from cryptid_bot.discord_utils import split_discord_message
 
 
@@ -29,6 +30,18 @@ class BotHelperTest(unittest.TestCase):
             "/cryptidhelp",
         ]:
             self.assertIn(command, help_text)
+
+    def test_generation_error_uses_safe_ai_error_message(self):
+        message = format_generation_error("cryptid entry", AIQuotaError("quota exhausted"))
+
+        self.assertEqual(message, "Could not create a cryptid entry: quota exhausted")
+
+    def test_generation_error_hides_unexpected_exception_details(self):
+        message = format_generation_error("cryptid entry", RuntimeError("secret provider payload"))
+
+        self.assertIn("Could not create a cryptid entry", message)
+        self.assertIn("bot logs", message)
+        self.assertNotIn("secret provider payload", message)
 
 
 if __name__ == "__main__":

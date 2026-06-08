@@ -1,8 +1,17 @@
 from google import genai
+from google.genai import errors
 from google.genai import types
 
 from cryptid_bot.config import Settings
 from cryptid_bot.prompts import load_prompt
+
+
+class AIServiceError(RuntimeError):
+    """Raised when the AI provider fails in a user-displayable way."""
+
+
+class AIQuotaError(AIServiceError):
+    """Raised when the AI provider rejects a request because quota is exhausted."""
 
 
 # This class keeps all AI-related code in one place.
@@ -58,17 +67,30 @@ class CryptidStoryAI:
         user_prompt = "\n".join(prompt_lines)
 
         # Send the request to the selected Gemini model.
-        response = self.client.models.generate_content(
-            model=self.settings.gemini_model,
-            contents=user_prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                temperature=0.9,
-            ),
-        )
+        try:
+            response = self.client.models.generate_content(
+                model=self.settings.gemini_model,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    temperature=0.9,
+                ),
+            )
+        except errors.APIError as exc:
+            if is_quota_error(exc):
+                raise AIQuotaError(
+                    "The AI service quota is exhausted right now. "
+                    "Check the Gemini API plan, billing, rate limits, or selected model, then try again."
+                ) from exc
+            raise AIServiceError("The AI service could not generate a response right now. Try again later.") from exc
 
         # text is the final generated story/profile we send back to Discord.
         text = (response.text or "").strip()
         if not text:
             raise RuntimeError("Gemini returned an empty response.")
         return text
+
+
+def is_quota_error(exc: errors.APIError) -> bool:
+    message = getattr(exc, "message", "") or str(exc)
+    return getattr(exc, "status", None) == 429 or "RESOURCE_EXHAUSTED" in message or "quota" in message.lower()
